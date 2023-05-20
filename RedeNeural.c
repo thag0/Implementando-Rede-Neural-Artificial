@@ -1,9 +1,10 @@
-#include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include <time.h>
 
 #define BIAS 1
+
+#define FUNCAO_ATIVACAO(valor) RNA_funcao_ativacao_relu(valor)
+#define FUNCAO_ATIVACAO_SAIDA(valor) RNA_funcao_ativacao_reluDx(valor)
 
 typedef struct{
    double* peso;
@@ -41,7 +42,7 @@ void RNA_imprimir_saida_neuronio_saida(RedeNeural* rede);
 
 double RNA_funcao_ativacao_relu(double valor){
    if(valor < 0) return 0;
-   return valor;
+   else return valor;
 }
 
 
@@ -103,11 +104,9 @@ void RNA_apagar_rede(RedeNeural* rede){
 
 void RNA_inicializar_neuronio(Neuronio* neuronio, int quantidade_ligacoes){
    neuronio->quantidade_ligacoes = quantidade_ligacoes;
-   neuronio->peso = (double*) malloc(quantidade_ligacoes * sizeof(double));
+   neuronio->peso = (double*) malloc(sizeof(double));
 
-   for(int i = 0; i < quantidade_ligacoes; i++){
-      neuronio->peso[i] = (rand() % 200) - 100;
-   }
+   (*neuronio->peso) = (rand() % 200) - 100;
 
    neuronio->saida = 0;
 }
@@ -116,10 +115,12 @@ void RNA_inicializar_neuronio(Neuronio* neuronio, int quantidade_ligacoes){
 void RNA_calcular_entrada(RedeNeural* rede, double dados[]){
 
    //camada de entrada
-   int tamanho = rede->entrada.quantidade_neuronios;
-   for(int i = 0; i < tamanho; i++){
-      rede->entrada.neuronios[i].saida = ((rede->entrada.neuronios[i].peso[i]) * dados[i]) + BIAS;
-      rede->entrada.neuronios[i].saida = RNA_funcao_ativacao_relu(rede->entrada.neuronios[i].saida);
+   int qtd_neuronios_entrada = rede->entrada.quantidade_neuronios;
+   double soma = 0;
+   for(int i = 0; i < qtd_neuronios_entrada; i++){
+      soma += dados[i] * (*rede->entrada.neuronios[i].peso);
+      soma += BIAS;
+      rede->entrada.neuronios[i].saida = FUNCAO_ATIVACAO(soma);
    }
 
    //camadas ocultas
@@ -142,8 +143,8 @@ void RNA_calcular_entrada(RedeNeural* rede, double dados[]){
          for (int i = 0; i < (camada_anterior->quantidade_neuronios); i++){
             soma += camada_anterior->neuronios[i].saida * camada_atual->neuronios[neuronio].peso[i];
          }
-
-         camada_atual->neuronios[neuronio].saida = RNA_funcao_ativacao_relu(soma + BIAS);
+         soma += BIAS;
+         camada_atual->neuronios[neuronio].saida = FUNCAO_ATIVACAO(soma);
       }
    }
 
@@ -157,7 +158,8 @@ void RNA_calcular_entrada(RedeNeural* rede, double dados[]){
       for(int neuronio_oculta = 0; neuronio_oculta < oculta->quantidade_neuronios; neuronio_oculta++){
          soma += (oculta->neuronios[neuronio_oculta].saida) * (rede->saida.neuronios[neuronio_saida].peso[neuronio_oculta]);
       }
-      rede->saida.neuronios[neuronio_saida].saida = RNA_funcao_ativacao_reluDx(soma + BIAS);
+      soma += BIAS;
+      rede->saida.neuronios[neuronio_saida].saida = FUNCAO_ATIVACAO_SAIDA(soma);
    }
 }
 
@@ -175,9 +177,31 @@ void RNA_imprimir_pesos_entrada(RedeNeural* rede){
 }
 
 
+void RNA_imprimir_saida_neuronio_entrada(RedeNeural* rede){
+   printf("--Entrada--\n");
+   for(int i = 0; i < rede->entrada.quantidade_neuronios; i++){
+      printf("[neuronio(%d): %.2f]\n", i, rede->entrada.neuronios[i].saida);
+   }
+   printf("\n"); 
+}
+
+
+void RNA_imprimir_saida_neuronio_ocultas(RedeNeural* rede){
+   printf("--Camadas ocultas--\n");
+   for(int camada_escondida = 0; camada_escondida < (rede->quantidade_escondidas); camada_escondida++){
+      printf("Camada %d\n", camada_escondida);
+      for(int i = 0; i < rede->escondidas[camada_escondida].quantidade_neuronios; i++){
+         printf("[neuronio(%d): %.2f]\n", i, rede->escondidas[camada_escondida].neuronios[i].saida);
+      }
+   }
+   printf("\n");
+}
+
+
 void RNA_imprimir_saida_neuronio_saida(RedeNeural* rede){
    printf("--Saida--\n");
    for(int i = 0; i < rede->saida.quantidade_neuronios; i++){
       printf("[neuronio(%d): %.2f]\n", i, rede->saida.neuronios[i].saida);
    }
+   printf("\n");
 }
