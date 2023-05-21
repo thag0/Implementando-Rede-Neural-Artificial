@@ -110,9 +110,10 @@ void RNA_apagar_rede(RedeNeural* rede){
 void RNA_inicializar_neuronio(Neuronio* neuronio, int quantidade_ligacoes){
    neuronio->quantidade_ligacoes = quantidade_ligacoes;
    neuronio->peso = (double*) malloc(quantidade_ligacoes * sizeof(double));
+   int limite_peso = 100;
 
    for(int i = 0; i < quantidade_ligacoes; i++){
-      neuronio->peso[i] = (rand() % 200) - 100;
+      neuronio->peso[i] = (rand() % (limite_peso*2)) - limite_peso;
    }
 
    neuronio->saida = 0;
