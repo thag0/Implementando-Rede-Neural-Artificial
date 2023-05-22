@@ -39,7 +39,7 @@ double RNA_funcao_ativacao_reluDx(double valor);
 double RNA_funcao_ativacao_sigmoid(double valor);
 
 
-void RNA_calcular_entrada(RedeNeural* rede, double dados[]);
+void RNA_calcular_saida(RedeNeural* rede, double dados[]);
 void RNA_treinar(RedeNeural* rede, double entrada[], double alvo[]);
 
 void RNA_imprimir_saidas_entrada(RedeNeural* rede);
@@ -127,7 +127,7 @@ void RNA_inicializar_neuronio(Neuronio* neuronio, int quantidade_ligacoes){
 }
 
 
-void RNA_calcular_entrada(RedeNeural* rede, double dados[]){
+void RNA_calcular_saida(RedeNeural* rede, double dados[]){
 
    //camada de entrada
    int qtd_neuronios_entrada = rede->entrada.quantidade_neuronios;
@@ -181,7 +181,7 @@ void RNA_treinar(RedeNeural* rede, double entrada[], double classe[]){
    double erro_total = 0.0;
 
    // Etapa de propagação direta (forward propagation)
-   RNA_calcular_entrada(rede, entrada);
+   RNA_calcular_saida(rede, entrada);
 
    // Cálculo do erro na camada de saída
    for(int i = 0; i < rede->saida.quantidade_neuronios; i++){
