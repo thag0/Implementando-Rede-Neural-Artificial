@@ -177,7 +177,7 @@ void RNA_calcular_entrada(RedeNeural* rede, double dados[]){
 }
 
 
-void RNA_treinar(RedeNeural* rede, double entrada[], double alvo[]){
+void RNA_treinar(RedeNeural* rede, double entrada[], double classe[]){
    double erro_total = 0.0;
 
    // Etapa de propagação direta (forward propagation)
@@ -186,7 +186,7 @@ void RNA_treinar(RedeNeural* rede, double entrada[], double alvo[]){
    // Cálculo do erro na camada de saída
    for(int i = 0; i < rede->saida.quantidade_neuronios; i++){
       double saida = rede->saida.neuronios[i].saida;
-      double erro = alvo[i] - saida;
+      double erro = classe[i] - saida;
       erro_total += pow(erro, 2);
 
       // Cálculo do gradiente local na camada de saída
@@ -214,7 +214,7 @@ void RNA_treinar(RedeNeural* rede, double entrada[], double alvo[]){
 
          // Cálculo do gradiente local na camada oculta
          for(int k = 0; k < rede->saida.quantidade_neuronios; k++){
-            double erro = alvo[k] - rede->saida.neuronios[k].saida;
+            double erro = classe[k] - rede->saida.neuronios[k].saida;
             double peso = rede->saida.neuronios[k].peso[j];
             gradiente_local += erro * FUNCAO_ATIVACAO_SAIDA(rede->saida.neuronios[k].saida) * peso;
          }
