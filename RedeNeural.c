@@ -2,9 +2,9 @@
 #include <math.h>
 
 #define BIAS 1
-#define TAXA_APRENDIZAGEM 0.2
+#define TAXA_APRENDIZAGEM 0.1
 
-#define FUNCAO_ATIVACAO(valor) RNA_funcao_ativacao_relu(valor)
+#define FUNCAO_ATIVACAO(valor) RNA_funcao_ativacao_sigmoid(valor)
 #define FUNCAO_ATIVACAO_SAIDA(valor) RNA_funcao_ativacao_reluDx(valor)
 
 typedef struct{
@@ -117,7 +117,7 @@ void RNA_apagar_rede(RedeNeural* rede){
 void RNA_inicializar_neuronio(Neuronio* neuronio, int quantidade_ligacoes){
    neuronio->quantidade_ligacoes = quantidade_ligacoes;
    neuronio->peso = (double*) malloc(quantidade_ligacoes * sizeof(double));
-   int limite_peso = 100;
+   int limite_peso = 100;//adaptavel conforme o uso
 
    for(int i = 0; i < quantidade_ligacoes; i++){
       neuronio->peso[i] = (rand() % (limite_peso*2)) - limite_peso;
