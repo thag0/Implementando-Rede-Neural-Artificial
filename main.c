@@ -3,40 +3,26 @@
 #include "RedeNeural.c"
 
 
-#define QTD_TREINO 10000
+#define QTD_TREINO 3000
 
 
 void treino_sequencial(RedeNeural* rede, double dados[][3], double* entrada_teste, double* classe){
    for(int i = 0; i < QTD_TREINO; i++){
-      if(i%4 == 0){
-         entrada_teste[0] = dados[0][0];
-         entrada_teste[1] = dados[0][1];
-         *classe = dados[0][2];
+      //percorrer os dados
+      for(int i = 0; i < 4; i++){
+         entrada_teste[0] = dados[i][0];
+         entrada_teste[1] = dados[i][1];
+         *classe = dados[i][2];
 
-      }else if(i%3 == 0){
-         entrada_teste[0] = dados[1][0];
-         entrada_teste[1] = dados[1][1];
-         *classe = dados[1][2];
-
-      }else if(i%2 == 0){
-         entrada_teste[0] = dados[2][0];
-         entrada_teste[1] = dados[2][1];
-         *classe = dados[2][2];
-
-      }else{
-         entrada_teste[0] = dados[3][0];
-         entrada_teste[1] = dados[3][1];
-         *classe = dados[3][2];
+         RNA_treinar(rede, entrada_teste, classe);    
       }
-
-      RNA_treinar(rede, entrada_teste, classe);
    }
 }
 
 
 void treino_aleatorio(RedeNeural* rede, double dados[][3], double* entrada_teste, double* classe){
    int valor = 0;
-   for(int i = 0; i < QTD_TREINO; i++){
+   for(int i = 0; i < (QTD_TREINO*2); i++){
       valor = rand() % 4;
       if(valor == 0){
          entrada_teste[0] = dados[0][0];
@@ -64,7 +50,7 @@ void treino_aleatorio(RedeNeural* rede, double dados[][3], double* entrada_teste
 }
 
 
-void impressao_resultados(RedeNeural* rede){
+void impressao_camadas_rede(RedeNeural* rede){
    RNA_imprimir_saidas_entrada(rede);
    RNA_imprimir_saidas_ocultas(rede);
    RNA_imprimir_saidas_saida(rede);
@@ -89,18 +75,19 @@ int main(){
    double dados_predict[] = {0, 1};
 
    RedeNeural* rede = RNA_criar_rede(qtd_neuronios_entrada, qtd_neuronios_oculta, qtd_neuronios_saida, qtd_camadas_ocultas);
-   printf("\t-Antes do treino-\n");
-   RNA_calcular_saida(rede, dados_predict);
-   impressao_resultados(rede);
+   // printf("\t-Antes do treino-\n");
+   // RNA_calcular_saida(rede, dados_predict);
+   // impressao_resultados(rede);
 
    treino_aleatorio(rede, dados, entrada_teste, classe);
 
-   printf("\t-Depois do treino-\n");
-   RNA_calcular_saida(rede, dados_predict);
-   impressao_resultados(rede);
+   // printf("\t-Depois do treino-\n");
+   // RNA_calcular_saida(rede, dados_predict);
+   // impressao_resultados(rede);
+   //impressao_resultados(rede, dados);
 
    char resposta = ' ';
-   printf("Fazer uma predicao ? [s/n]: ");
+   printf("Rede treinada\nFazer uma predicao ? [s/n]: ");
    scanf(" %c", &resposta);
    if(resposta == 's' || resposta == 'S'){
       int loop = 1;
@@ -123,7 +110,6 @@ int main(){
 
 
    }
-
    RNA_apagar_rede(rede);
    free(classe);
    free(entrada_teste);
