@@ -99,11 +99,6 @@ public class RedeNeural{
       }
    }
 
-   
-   public void treinar(RedeNeural rede, double[] entrada, double classe){
-      //implementar
-   }   
-
 
    //funções de ativação
    public double relu(double valor){

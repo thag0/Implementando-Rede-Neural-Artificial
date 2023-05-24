@@ -1,8 +1,10 @@
 import rna.RedeNeural;
+import treino.TreinoGenetico;
 
 class Main{
    public static void main(String[] args){
       limparConsole();
+      TreinoGenetico treinoGenetico = new TreinoGenetico();
 
       double[][] dados = new double[][]{
          {0,0,0},
@@ -12,28 +14,19 @@ class Main{
       };
 
       double[] dados_teste = new double[2];
-      double[] classe_teste = new double[1];
 
-      RedeNeural rede = new RedeNeural(dados_teste.length, 3, 1, 1);
-      int QTD_TREINO = 500;
+      RedeNeural rede = new RedeNeural(dados_teste.length, 3, 2, 1);
 
-      //treino sequencial
-      for(int i = 0; i < QTD_TREINO; i++){
-         for(int j = 0; j < dados.length; j++){
-            dados_teste[0]  = dados[j][0];
-            dados_teste[1]  = dados[j][1];
-            classe_teste[0] = dados[j][2];
-         }
-
-         rede.treinar(rede, dados_teste, classe_teste[0]);
-      }
-
-      dados_teste[0] = 0;
-      dados_teste[1] = 1;
+      dados_teste[0] = dados[1][0];
+      dados_teste[1] = dados[1][1];
+      System.out.println("Entrada dada (" + dados_teste[0] + ") (" + dados_teste[1] + ")");      
       rede.calcularSaida(rede, dados_teste);
       imprimirarApenasSaidasRede(rede);
 
-      //imprimirPesosRede(rede);
+      treinoGenetico.ajustarPesos(rede);
+      
+      rede.calcularSaida(rede, dados_teste);
+      imprimirarApenasSaidasRede(rede);
    }
 
 
@@ -71,35 +64,26 @@ class Main{
 
 
    static void imprimirPesosRede(RedeNeural rede){
-      System.out.println("Entrada:");
+      System.out.println("\t--Entrada--");
       for(int i = 0; i < rede.qtdNeuroniosEntrada; i++){
          System.out.println("n" + i);
          for(int j = 0; j < rede.entrada.neuronios[i].qtdLigacoes; j++){
-            System.out.println(rede.entrada.neuronios[i].pesos[j]);
-         }  
-      }
-      System.out.println();
-
-      System.out.println("Ocultas:");
-      for(int i = 0; i < rede.qtdCamadasOcultas; i++){
-         System.out.println("O" + i + " ");
-         for(int j = 0; j < rede.qtdNeuroniosOcultas; j++){
-            System.out.println("n" + j);
-            for(int k = 0; k < rede.ocultas[i].neuronios[j].pesos.length; k++){
-               System.out.println(rede.ocultas[i].neuronios[j].pesos[k]);
-            }
+            System.out.println("p" + j + " [" + rede.entrada.neuronios[i].pesos[j] + "]");
          }
          System.out.println();
       }
 
-      System.out.println("Saida:");
-      for(int i = 0; i < rede.qtdNeuroniosSaida; i++){
-         System.out.println("n" + i);
-         for(int j = 0; j < rede.saida.neuronios[i].pesos.length; j++){
-            System.out.println(rede.saida.neuronios[i].pesos[j]);
+      System.out.println("\t--Ocultas--");
+      for(int i = 0; i < rede.qtdCamadasOcultas; i++){
+         System.out.println("Oculta " + i + " ");
+         for(int j = 0; j < rede.qtdNeuroniosOcultas; j++){
+            System.out.println("n" + j);
+            for(int k = 0; k < rede.ocultas[i].neuronios[j].pesos.length; k++){
+               System.out.println("p" + k + "[" +rede.ocultas[i].neuronios[j].pesos[k] + "]");
+            }
+            System.out.println();
          }
       }
-      System.out.println();
    }
 
 
