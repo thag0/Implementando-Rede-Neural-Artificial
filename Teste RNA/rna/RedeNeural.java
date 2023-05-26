@@ -192,7 +192,7 @@ public class RedeNeural{
    public double calcularPrecisao(RedeNeural rede, double[][] dados, double[] classe){
       double precisao = 0;
 
-      double[] dados_treino = new double[3];
+      double[] dados_treino = new double[dados[0].length-1];
       double[] classe_treino = new double[1];
       int acertosTotais = 0;
       int acertosSaida = 0;

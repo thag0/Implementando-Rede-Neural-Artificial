@@ -57,6 +57,7 @@ public class Auxiliares{
       }
    }
 
+   
    static void imprimirPesosOcultasRede(RedeNeural rede){
       System.out.println("\t--Ocultas--");
       for(int i = 0; i < rede.qtdCamadasOcultas; i++){

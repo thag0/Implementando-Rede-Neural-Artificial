@@ -1,44 +1,47 @@
 import rna.RedeNeural;
+import treino.Individuo;
+import treino.TreinoGenetico;
 
 class Main{
    public static void main(String[] args){
       limparConsole();
 
-      //porta lógica xor em cascata com outra xor
-      double[][] dados = new double[][]{
-         {0, 0, 0, 0},
-         {0, 0, 1, 1},
-         {0, 1, 0, 1},
-         {0, 1, 1, 0},
-         {1, 0, 0, 1},
-         {1, 0, 1, 0},
-         {1, 1, 0, 0},
-         {1, 1, 1, 1}
-      };
 
-      double[] dados_teste = new double[3];
-      double[] classe_teste = new double[1];
+      int nEntrada = 3;
+      int nOcultas = 3;
+      int nSaida = 3;
+      int qtdOcultas = 1;
 
-      RedeNeural rede = new RedeNeural(3, 3, 1, 2);
+      int qtdPopulacao = 10;
+      TreinoGenetico treinoGenetico = new TreinoGenetico(qtdPopulacao);
 
-      dados_teste[0] = 1;
-      dados_teste[1] = 0;
-      dados_teste[2] = 1;
-      System.out.println("Resultado antes do treino (" + dados_teste[0] + ") (" + dados_teste[1] + ") (" + dados_teste[2] + ")");
-      rede.calcularSaida(rede, dados_teste);
+      for(int i = 0; i < qtdPopulacao; i++){
+         Individuo novoIndividuo = gerarIndividuo(nEntrada, nOcultas, nSaida, qtdOcultas);
+         treinoGenetico.carregarIndividuo(novoIndividuo);
+         System.out.println(novoIndividuo);
+      }
+
+      treinoGenetico.individuos[4].batidasParede = 3;
+      treinoGenetico.individuos[4].flechaAcertada = 1;
+      treinoGenetico.individuos[4].ouroColetado = 1;
+      treinoGenetico.individuos[4].passosDados = 50;
+      treinoGenetico.individuos[4].batidasParede = 60;
 
 
-      Auxiliares.imprimirarApenasSaidasRede(rede);
-   
-      rede.backPropagation(rede, dados, classe_teste, 1000);
+      treinoGenetico.calcularFitness(treinoGenetico.individuos[4]);
+      
+
+      
+      Individuo melhoreIndividuo = treinoGenetico.escolherMelhorIndividuo();
+      System.out.println(melhoreIndividuo);
+   }
 
 
-      System.out.println("------------------------------------------------------------");
-      System.out.println("Precisao " + rede.calcularPrecisao(rede, dados, classe_teste));
-
-      System.out.println("Resultado depois do treino (" + dados_teste[0] + ") (" + dados_teste[1] + ") (" + dados_teste[2] + ")");
-      rede.calcularSaida(rede, dados_teste);
-      Auxiliares.imprimirarApenasSaidasRede(rede);
+   public static Individuo gerarIndividuo(int qtdNeuroniosEntrada, int qtdNeuroniosOcultas, int qtdNeuroniosSaida, int qtdOcultas){
+      Individuo individuo = new Individuo();
+      individuo.vivo = true;
+      individuo.rede = new RedeNeural(qtdNeuroniosEntrada, qtdNeuroniosOcultas, qtdNeuroniosSaida, qtdOcultas);
+      return individuo;
    }
 
 
