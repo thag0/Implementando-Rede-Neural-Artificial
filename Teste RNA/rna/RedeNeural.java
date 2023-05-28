@@ -1,7 +1,7 @@
 package rna;
 
 
-public class RedeNeural{
+public class RedeNeural implements Cloneable{
    public Camada entrada;
    public Camada[] ocultas;
    public Camada saida;
@@ -13,7 +13,7 @@ public class RedeNeural{
    public int qtdCamadasOcultas;
 
    int BIAS = 1;
-   final double TAXA_APRENDIZAGEM = 0.2;
+   double TAXA_APRENDIZAGEM = 0.1;
 
    public RedeNeural(int qtdNeuroniosEntrada, int qtdNeuroniosOcultas, int qtdNeuroniosSaida, int qtdCamadasOcultas){
       if(qtdNeuroniosEntrada < 1 || qtdNeuroniosOcultas < 1 || qtdNeuroniosSaida < 1 || qtdCamadasOcultas < 1){
@@ -76,27 +76,28 @@ public class RedeNeural{
       }
 
       //ocultas
-      for(int camadaOculta = 0; camadaOculta < rede.qtdCamadasOcultas; camadaOculta++){//percorrer camadas ocultas
+      double soma = 0.0;
+      for(int i = 0; i < rede.qtdCamadasOcultas; i++){//percorrer camadas ocultas
 
-         Camada camadaAtual = rede.ocultas[camadaOculta];
+         Camada camadaAtual = rede.ocultas[i];
          Camada camadaAnterior;
-         if(camadaOculta == 0) camadaAnterior = rede.entrada;
-         else camadaAnterior = rede.ocultas[camadaOculta-1];
+         if(i == 0) camadaAnterior = rede.entrada;
+         else camadaAnterior = rede.ocultas[i-1];
 
-         for(int neuronio = 0; neuronio < camadaAtual.neuronios.length; neuronio++){
-            double soma = 0.0;
-            for(int i = 0; i < camadaAnterior.neuronios.length; i++){
-               soma += camadaAnterior.neuronios[i].saida * camadaAnterior.neuronios[i].pesos[neuronio];
+         for(int j = 0; j < camadaAtual.neuronios.length; j++){
+            soma = 0.0;
+            for(int k = 0; k < camadaAnterior.neuronios.length; k++){
+               soma += camadaAnterior.neuronios[k].saida * camadaAnterior.neuronios[k].pesos[j];
             }
             soma += BIAS;
-            camadaAtual.neuronios[neuronio].saida = sigmoid(soma);
+            camadaAtual.neuronios[j].saida = relu(soma);
          }
       }
 
       //saída
       for(int neuronioSaida = 0; neuronioSaida < rede.saida.neuronios.length; neuronioSaida++){
          Camada oculta = rede.ocultas[rede.qtdCamadasOcultas-1];
-         double soma = 0.0;
+         soma = 0.0;
 
          for(int neuronioOculta = 0; neuronioOculta < oculta.neuronios.length; neuronioOculta++){
             soma += oculta.neuronios[neuronioOculta].saida * oculta.neuronios[neuronioOculta].pesos[neuronioSaida]; 
@@ -106,90 +107,8 @@ public class RedeNeural{
       }
    }
 
-
-   public void backPropagation(RedeNeural rede, double[][] dados, double[] classe, int epochs){
-      double[] dados_treino = new double[dados[0].length-1];
-      double[] classe_treino = new double[1];
-
-      for(int i = 0; i < epochs; i++){
-
-         for(int j = 0; j < dados[1].length-1; j++){
-            for(int k = 0; k < dados_treino.length; k++){
-               dados_treino[k] = dados[j][k];
-            }
-            classe_treino[0] = dados[j][dados[0].length-1];
-            rede.backPropagation(rede, dados_treino, classe_treino);
-         }
-      }
-   }
-   /**
-    * teste
-    */
-   private void backPropagation(RedeNeural rede, double[] entrada, double[] classe){
-
-      //calcular saída
-      calcularSaida(rede, entrada);
-      //comparar o valor desejado da saída com o resultado da rede (erro)
-
-      double erro = 0.0;
-      //percorrer saída
-      for(int i = 0; i < rede.saida.neuronios.length; i++){
-         //para cada neuronio da saida, percorrer todos os neuronios da camada anterior
-         //que se relacionam com ele
-         //novo_peso = peso_anterior + TAXA_APRENDIZAGEM * erro * entrada
-         Camada camadaAnterior = rede.ocultas[rede.ocultas.length-1];//ultima camada oculta
-         double saida = rede.saida.neuronios[i].saida;
-         erro = classe[i] - saida;
-         erro = Math.pow(erro, 2);
-
-         //percorrer os neuronios da camada anterior para reajustar os pesos
-         for(int j = 0; j < camadaAnterior.neuronios.length; j++){
-
-            //percorrer os pesos do neuronio
-            for(int k = 0; k < camadaAnterior.neuronios[j].pesos.length; k++){
-               
-               if(i == k){//peso relativo ao neuronio de saída
-                  double saidaNeuronioOculta = camadaAnterior.neuronios[j].saida;
-                  double pesoNeuronioOculta = camadaAnterior.neuronios[j].pesos[k];
-                  camadaAnterior.neuronios[j].pesos[k] = pesoNeuronioOculta + (TAXA_APRENDIZAGEM * erro * saidaNeuronioOculta);
-               }
-            }
-         }
-      }
-
-      //percorrer camadas ocultas até a entrada
-      for(int i = rede.ocultas.length-2; i >= 0; i--){
-         Camada camadaAtual = rede.ocultas[i];
-         Camada camadaAnterior;
-         
-         //se estiver na ultima camada oculta, a anterior vai ser a entrada
-         //se não, vai ser a camada anterior relativa a camada atual
-         if(i == rede.ocultas.length-1) camadaAnterior = rede.entrada;
-         else camadaAnterior = rede.ocultas[rede.ocultas.length-1];
-
-
-         //percorrer os neuronios da camada atual
-         for(int j = 0; j < camadaAtual.neuronios.length; j++){
-
-            //percorrer os neuronios da camada anterior
-            for(int k = 0; k < camadaAnterior.neuronios.length; k++){
-
-               //percorrer os pesos dos neuronios
-               for(int l = 0; l < camadaAnterior.neuronios[k].pesos.length; l++){
-                  //novo_peso = peso_anterior + TAXA_APRENDIZAGEM * erro * entrada
-                  if(l == j){
-                     double pesoNeuronioOculta = camadaAtual.neuronios[k].pesos[l];
-                     double saidaNeuronioOculta = camadaAtual.neuronios[k].saida;
-                     camadaAnterior.neuronios[k].pesos[l] = pesoNeuronioOculta + (TAXA_APRENDIZAGEM * erro * saidaNeuronioOculta);
-                  }
-               }
-            }
-         }
-      }
-   }
-
-
-   public double calcularPrecisao(RedeNeural rede, double[][] dados, double[] classe){
+   
+   public double calcularPrecisao(RedeNeural rede, double[][] dados){
       double precisao = 0;
 
       double[] dados_treino = new double[dados[0].length-1];
@@ -235,5 +154,76 @@ public class RedeNeural{
 
    public double sigmoid(double valor){
       return 1 / (1 + Math.exp(-valor));
+   }
+
+
+   public double sigmoidDx(double valor){
+      return (sigmoid(valor) * (1-sigmoid(valor)));
+   }
+
+
+   public double tanH(double valor){
+      return ((2 * sigmoid(valor) * (2*valor)) - 1);
+   }
+
+
+   //clonar a rede
+   @Override
+   public RedeNeural clone(){
+      try {
+         RedeNeural clone = (RedeNeural) super.clone();
+
+         // Clonar dados importantes
+         clone.qtdNeuroniosEntrada = this.qtdNeuroniosEntrada;
+         clone.qtdNeuroniosOcultas = this.qtdNeuroniosOcultas;
+         clone.qtdNeuroniosSaida = this.qtdNeuroniosSaida;
+         clone.qtdCamadasOcultas = this.qtdCamadasOcultas;
+         clone.BIAS = this.BIAS;
+         clone.TAXA_APRENDIZAGEM = this.TAXA_APRENDIZAGEM;
+
+         // Clonar camada de entrada
+         clone.entrada = cloneCamada(this.entrada);
+
+         // Clonar camadas ocultas
+         clone.ocultas = new Camada[qtdCamadasOcultas];
+         for (int i = 0; i < qtdCamadasOcultas; i++) {
+            clone.ocultas[i] = cloneCamada(this.ocultas[i]);
+         }
+
+         // Clonar camada de saída
+         clone.saida = cloneCamada(this.saida);
+
+         return clone;
+      } catch (CloneNotSupportedException e){
+         throw new RuntimeException(e);
+      }
+   }
+
+
+   private Camada cloneCamada(Camada camada){
+      Camada clone = new Camada();
+      clone.neuronios = new Neuronio[camada.neuronios.length];
+
+      for (int i = 0; i < camada.neuronios.length; i++) {
+         clone.neuronios[i] = cloneNeuronio(camada.neuronios[i], camada.neuronios[i].qtdLigacoes, camada.neuronios[i].pesos);
+      }
+
+      return clone;
+   }
+
+
+   private Neuronio cloneNeuronio(Neuronio neuronio, int qtdLigacoes, double[] pesos){
+      Neuronio clone = new Neuronio(neuronio.pesos.length);
+
+      double pesosClone[] = new double[qtdLigacoes];
+
+      for(int i = 0; i < pesos.length; i++){
+         pesosClone[i] = pesos[i];
+      }
+
+      clone.pesos = pesosClone;
+      clone.qtdLigacoes = qtdLigacoes;
+
+      return clone;
    }
 }
