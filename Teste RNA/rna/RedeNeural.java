@@ -15,6 +15,16 @@ public class RedeNeural implements Cloneable{
    int BIAS = 1;
    double TAXA_APRENDIZAGEM = 0.1;
 
+   //padronizar uso das funções de ativação
+   final int ativacaoRelu = 1;
+   final int ativacaoReluDx = 2;
+   final int ativacaoSigmoid = 3;
+   final int ativacaoSigmoidDx = 4;
+   final int ativacaoTanH = 5;
+   
+   int funcaoAtivacao = ativacaoTanH;
+   int funcaoAtivacaoSaida = ativacaoTanH;
+
    public RedeNeural(int qtdNeuroniosEntrada, int qtdNeuroniosOcultas, int qtdNeuroniosSaida, int qtdCamadasOcultas){
       if(qtdNeuroniosEntrada < 1 || qtdNeuroniosOcultas < 1 || qtdNeuroniosSaida < 1 || qtdCamadasOcultas < 1){
          throw new IllegalArgumentException("Os valores devem ser maiores ou iguais a um.");
@@ -90,7 +100,7 @@ public class RedeNeural implements Cloneable{
                soma += camadaAnterior.neuronios[k].saida * camadaAnterior.neuronios[k].pesos[j];
             }
             soma += BIAS;
-            camadaAtual.neuronios[j].saida = relu(soma);
+            camadaAtual.neuronios[j].saida = funcaoAtivacao(soma);
          }
       }
 
@@ -103,7 +113,7 @@ public class RedeNeural implements Cloneable{
             soma += oculta.neuronios[neuronioOculta].saida * oculta.neuronios[neuronioOculta].pesos[neuronioSaida]; 
          }
          soma += BIAS;
-         rede.saida.neuronios[neuronioSaida].saida = reluDx(soma);
+         rede.saida.neuronios[neuronioSaida].saida = funcaoAtivacaoSaida(soma);
       }
    }
 
@@ -140,30 +150,68 @@ public class RedeNeural implements Cloneable{
 
 
    //funções de ativação
-   public double relu(double valor){
+   /**
+    * 1 - ReLu
+    * 2 - ReLu derivada
+    * 3 - Sigmoide
+    * 4 - Sigmoid derivada
+    * 5 - Tangente tangente hiperbolica
+    * Por padrão será usado ReLu e Relu derivada, respectivamente
+    * @param ocultas função de ativação das camadas ocultas
+    * @param saida função de ativação da ultima camada oculta para a saída
+    */
+   public void configurarFuncaoAtivacao(int ocultas, int saida){
+      funcaoAtivacao = ocultas;
+      funcaoAtivacaoSaida = saida;
+   }
+
+
+   public double funcaoAtivacao(double valor){
+      if(funcaoAtivacao == ativacaoRelu) return relu(valor);
+      if(funcaoAtivacao == ativacaoReluDx) return reluDx(valor);
+      if(funcaoAtivacao == ativacaoSigmoid) return sigmoid(valor);
+      if(funcaoAtivacao == ativacaoSigmoidDx) return sigmoidDx(valor);
+      if(funcaoAtivacao == ativacaoTanH) return tanH(valor);
+
+      else return valor;
+   }
+
+
+   public double funcaoAtivacaoSaida(double valor){
+      if(funcaoAtivacaoSaida == ativacaoRelu) return relu(valor);
+      if(funcaoAtivacaoSaida == ativacaoReluDx) return reluDx(valor);
+      if(funcaoAtivacaoSaida == ativacaoSigmoid) return sigmoid(valor);
+      if(funcaoAtivacaoSaida == ativacaoSigmoidDx) return sigmoidDx(valor);
+      if(funcaoAtivacaoSaida == ativacaoTanH) return tanH(valor);
+
+      else return valor;
+   }
+
+
+   private double relu(double valor){
       if(valor < 0) return 0;
       return valor;
    }
 
 
-   public double reluDx(double valor){
+   private double reluDx(double valor){
       if(valor < 0) return 0;
       return 1;     
    }
 
 
-   public double sigmoid(double valor){
+   private double sigmoid(double valor){
       return 1 / (1 + Math.exp(-valor));
    }
 
 
-   public double sigmoidDx(double valor){
+   private double sigmoidDx(double valor){
       return (sigmoid(valor) * (1-sigmoid(valor)));
    }
 
 
-   public double tanH(double valor){
-      return ((2 * sigmoid(valor) * (2*valor)) - 1);
+   private double tanH(double valor){
+      return Math.tanh(valor);
    }
 
 
