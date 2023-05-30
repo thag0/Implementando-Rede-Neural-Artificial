@@ -5,6 +5,7 @@ import java.util.Random;
 public class Neuronio{
    public double[] pesos;
    public double saida;
+   public double erro;//implementar backpropagation
 
    public int qtdLigacoes;
    private Random random = new Random();

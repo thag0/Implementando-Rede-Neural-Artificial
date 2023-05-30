@@ -1,6 +1,5 @@
 package rna;
 
-
 public class RedeNeural implements Cloneable{
    public Camada entrada;
    public Camada[] ocultas;
@@ -21,9 +20,13 @@ public class RedeNeural implements Cloneable{
    final int ativacaoSigmoid = 3;
    final int ativacaoSigmoidDx = 4;
    final int ativacaoTanH = 5;
+   final int ativacaoTanHDx = 6;
+   final int ativacaoLeakyRelu = 7;
    
    int funcaoAtivacao = ativacaoTanH;
    int funcaoAtivacaoSaida = ativacaoTanH;
+
+   int i, j, k;//contadores
 
    public RedeNeural(int qtdNeuroniosEntrada, int qtdNeuroniosOcultas, int qtdNeuroniosSaida, int qtdCamadasOcultas){
       if(qtdNeuroniosEntrada < 1 || qtdNeuroniosOcultas < 1 || qtdNeuroniosSaida < 1 || qtdCamadasOcultas < 1){
@@ -81,22 +84,24 @@ public class RedeNeural implements Cloneable{
       }
 
       //entrada
-      for(int i = 0; i < rede.qtdNeuroniosEntrada; i++){
+      for(i = 0; i < rede.qtdNeuroniosEntrada; i++){
          rede.entrada.neuronios[i].saida = dados[i];
       }
 
       //ocultas
       double soma = 0.0;
-      for(int i = 0; i < rede.qtdCamadasOcultas; i++){//percorrer camadas ocultas
+      for(i = 0; i < rede.qtdCamadasOcultas; i++){//percorrer camadas ocultas
 
          Camada camadaAtual = rede.ocultas[i];
          Camada camadaAnterior;
          if(i == 0) camadaAnterior = rede.entrada;
          else camadaAnterior = rede.ocultas[i-1];
 
-         for(int j = 0; j < camadaAtual.neuronios.length; j++){
+         for(j = 0; j < camadaAtual.neuronios.length; j++){//percorrer cada neuronio da camada atual
+            //somar todas as saídas da camada anterior e multiplicar pelos pesos respectivos a cada neuronio da
+            //proxima camada
             soma = 0.0;
-            for(int k = 0; k < camadaAnterior.neuronios.length; k++){
+            for(k = 0; k < camadaAnterior.neuronios.length; k++){
                soma += camadaAnterior.neuronios[k].saida * camadaAnterior.neuronios[k].pesos[j];
             }
             soma += BIAS;
@@ -105,15 +110,16 @@ public class RedeNeural implements Cloneable{
       }
 
       //saída
-      for(int neuronioSaida = 0; neuronioSaida < rede.saida.neuronios.length; neuronioSaida++){
-         Camada oculta = rede.ocultas[rede.qtdCamadasOcultas-1];
+      for(i = 0; i < rede.saida.neuronios.length; i++){
          soma = 0.0;
-
-         for(int neuronioOculta = 0; neuronioOculta < oculta.neuronios.length; neuronioOculta++){
-            soma += oculta.neuronios[neuronioOculta].saida * oculta.neuronios[neuronioOculta].pesos[neuronioSaida]; 
+         for(j = 0; j < (rede.ocultas[rede.qtdCamadasOcultas-1].neuronios.length); j++){
+            soma += (
+               rede.ocultas[rede.qtdCamadasOcultas-1].neuronios[j].saida *
+               rede.ocultas[rede.qtdCamadasOcultas-1].neuronios[j].pesos[i]
+            ); 
          }
          soma += BIAS;
-         rede.saida.neuronios[neuronioSaida].saida = funcaoAtivacaoSaida(soma);
+         rede.saida.neuronios[i].saida = funcaoAtivacaoSaida(soma);
       }
    }
 
@@ -151,27 +157,35 @@ public class RedeNeural implements Cloneable{
 
    //funções de ativação
    /**
-    * 1 - ReLu
-    * 2 - ReLu derivada
-    * 3 - Sigmoide
-    * 4 - Sigmoid derivada
-    * 5 - Tangente tangente hiperbolica
-    * Por padrão será usado ReLu e Relu derivada, respectivamente
+    * 1 - ReLu.
+    * 2 - ReLu derivada.
+    * 3 - Sigmoide.
+    * 4 - Sigmoid derivada.
+    * 5 - Tangente hiperbolica.
+    * 6 - Tangente hiperbolica derivada.
+    * 7 - Leaky ReLu.
+    * Por padrão será usado ReLu e Relu derivada, respectivamente.
     * @param ocultas função de ativação das camadas ocultas
     * @param saida função de ativação da ultima camada oculta para a saída
     */
    public void configurarFuncaoAtivacao(int ocultas, int saida){
+      if(ocultas < 0 || ocultas > 7) funcaoAtivacao = 1;
+      if(saida < 0 || saida > 7) funcaoAtivacaoSaida = 2;
+
       funcaoAtivacao = ocultas;
       funcaoAtivacaoSaida = saida;
    }
 
 
+   //FUNÇÕES DE ATIVAÇÃO
    public double funcaoAtivacao(double valor){
       if(funcaoAtivacao == ativacaoRelu) return relu(valor);
       if(funcaoAtivacao == ativacaoReluDx) return reluDx(valor);
       if(funcaoAtivacao == ativacaoSigmoid) return sigmoid(valor);
       if(funcaoAtivacao == ativacaoSigmoidDx) return sigmoidDx(valor);
       if(funcaoAtivacao == ativacaoTanH) return tanH(valor);
+      if(funcaoAtivacao == ativacaoTanHDx) return tanHDx(valor);
+      if(funcaoAtivacao == ativacaoLeakyRelu) return leakyRelu(valor);
 
       else return valor;
    }
@@ -183,6 +197,8 @@ public class RedeNeural implements Cloneable{
       if(funcaoAtivacaoSaida == ativacaoSigmoid) return sigmoid(valor);
       if(funcaoAtivacaoSaida == ativacaoSigmoidDx) return sigmoidDx(valor);
       if(funcaoAtivacaoSaida == ativacaoTanH) return tanH(valor);
+      if(funcaoAtivacaoSaida == ativacaoTanHDx) return tanHDx(valor);
+      if(funcaoAtivacaoSaida == ativacaoLeakyRelu) return leakyRelu(valor);
 
       else return valor;
    }
@@ -212,6 +228,18 @@ public class RedeNeural implements Cloneable{
 
    private double tanH(double valor){
       return Math.tanh(valor);
+   }
+
+
+   private double tanHDx(double valor){
+      double resultado = Math.tanh(valor);
+      return (1 - Math.pow(resultado, 2));
+   }
+
+
+   private double leakyRelu(double valor){
+      if(valor >= 0) return valor;
+      else return (0.01) * valor;
    }
 
 
