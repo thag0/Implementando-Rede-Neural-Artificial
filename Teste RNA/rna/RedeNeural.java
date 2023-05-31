@@ -12,7 +12,7 @@ public class RedeNeural implements Cloneable{
    public int qtdCamadasOcultas;
 
    int BIAS = 1;
-   double TAXA_APRENDIZAGEM = 0.1;
+   double TAXA_APRENDIZAGEM = 0.3;
 
    //padronizar uso das funções de ativação
    final int ativacaoRelu = 1;
@@ -24,7 +24,7 @@ public class RedeNeural implements Cloneable{
    final int ativacaoLeakyRelu = 7;
    
    int funcaoAtivacao = ativacaoTanH;
-   int funcaoAtivacaoSaida = ativacaoTanH;
+   int funcaoAtivacaoSaida = ativacaoReluDx;
 
    int i, j, k;//contadores
 
@@ -78,28 +78,28 @@ public class RedeNeural implements Cloneable{
    }
 
 
-   public void calcularSaida(RedeNeural rede, double[] dados){
-      if(dados.length != rede.entrada.neuronios.length){
+   public void calcularSaida(double[] dados){
+      if(dados.length != this.entrada.neuronios.length){
          throw new IllegalArgumentException("As dimensões dos dados de entrada com os neurônios de entrada da rede não são iguais");
       }
 
       //entrada
-      for(i = 0; i < rede.qtdNeuroniosEntrada; i++){
-         rede.entrada.neuronios[i].saida = dados[i];
+      for(i = 0; i < this.qtdNeuroniosEntrada; i++){
+         this.entrada.neuronios[i].saida = dados[i];
       }
 
       //ocultas
       double soma = 0.0;
-      for(i = 0; i < rede.qtdCamadasOcultas; i++){//percorrer camadas ocultas
+      for(i = 0; i < this.qtdCamadasOcultas; i++){//percorrer camadas ocultas
 
-         Camada camadaAtual = rede.ocultas[i];
+         Camada camadaAtual = this.ocultas[i];
          Camada camadaAnterior;
-         if(i == 0) camadaAnterior = rede.entrada;
-         else camadaAnterior = rede.ocultas[i-1];
+         if(i == 0) camadaAnterior = this.entrada;
+         else camadaAnterior = this.ocultas[i-1];
 
          for(j = 0; j < camadaAtual.neuronios.length; j++){//percorrer cada neuronio da camada atual
-            //somar todas as saídas da camada anterior e multiplicar pelos pesos respectivos a cada neuronio da
-            //proxima camada
+            //saída é o somatorio dos pesos com os valores dos neuronios
+            //aplicado na função de ativação
             soma = 0.0;
             for(k = 0; k < camadaAnterior.neuronios.length; k++){
                soma += camadaAnterior.neuronios[k].saida * camadaAnterior.neuronios[k].pesos[j];
@@ -110,21 +110,21 @@ public class RedeNeural implements Cloneable{
       }
 
       //saída
-      for(i = 0; i < rede.saida.neuronios.length; i++){
+      for(i = 0; i < this.saida.neuronios.length; i++){
          soma = 0.0;
-         for(j = 0; j < (rede.ocultas[rede.qtdCamadasOcultas-1].neuronios.length); j++){
+         for(j = 0; j < (this.ocultas[this.qtdCamadasOcultas-1].neuronios.length); j++){
             soma += (
-               rede.ocultas[rede.qtdCamadasOcultas-1].neuronios[j].saida *
-               rede.ocultas[rede.qtdCamadasOcultas-1].neuronios[j].pesos[i]
+               this.ocultas[this.qtdCamadasOcultas-1].neuronios[j].saida *
+               this.ocultas[this.qtdCamadasOcultas-1].neuronios[j].pesos[i]
             ); 
          }
          soma += BIAS;
-         rede.saida.neuronios[i].saida = funcaoAtivacaoSaida(soma);
+         this.saida.neuronios[i].saida = funcaoAtivacaoSaida(soma);
       }
    }
 
    
-   public double calcularPrecisao(RedeNeural rede, double[][] dados){
+   public double calcularPrecisao(double[][] dados){
       double precisao = 0;
 
       double[] dados_treino = new double[dados[0].length-1];
@@ -138,15 +138,15 @@ public class RedeNeural implements Cloneable{
          dados_treino[2] = dados[i][2];
          classe_treino[0]= dados[i][3];
 
-         rede.calcularSaida(rede, dados_treino);
+         this.calcularSaida(dados_treino);
 
-         for(int j = 0; j < rede.saida.neuronios.length; j++){
-            if(rede.saida.neuronios[j].saida == classe_treino[j]){
+         for(int j = 0; j < this.saida.neuronios.length; j++){
+            if(this.saida.neuronios[j].saida == classe_treino[j]){
                acertosSaida ++;
             }
          }
          
-         if(acertosSaida == (rede.saida.neuronios.length)) acertosTotais++;
+         if(acertosSaida == (this.saida.neuronios.length)) acertosTotais++;
 
       }
 
@@ -155,7 +155,77 @@ public class RedeNeural implements Cloneable{
    }
 
 
-   //funções de ativação
+   public void backpropagation(double[] dados, double[] saidaEsperada){
+      if(saidaEsperada.length != this.saida.neuronios.length){
+         System.out.println("imcompatibilidade de dimensões");
+         return;
+      }
+
+      //calcular saída para aplicar o erro
+      this.calcularSaida(dados);
+
+      //CALCULANDO OS ERRROS DAS CAMADAS
+      //calcular erros da saída
+      for(int i = 0; i < this.saida.neuronios.length; i++){
+         this.saida.neuronios[i].erro = (this.saida.neuronios[i].saida - saidaEsperada[i]);
+         this.saida.neuronios[i].erro = reluDx(this.saida.neuronios[i].erro);
+      }
+
+      //propagar o erros para as outras camadas
+      for(int i = (this.ocultas.length-1); i >= 0; i--){
+         Camada camadaAtual = this.ocultas[i];
+         Camada proximaCamada;
+         if(i == (this.ocultas.length-1)) proximaCamada = this.saida;
+         else proximaCamada = this.ocultas[i+1];
+
+         //percorrer neuronios da camada atual
+         for(int j = 0; j < camadaAtual.neuronios.length; j++){
+            double erro = 0.0;
+            
+            for(int k = 0; k < proximaCamada.neuronios.length; k++){
+               erro += (proximaCamada.neuronios[k].erro * camadaAtual.neuronios[j].pesos[k]);
+               camadaAtual.neuronios[j].erro = erro * reluDx(camadaAtual.neuronios[j].saida);
+            }
+         }
+      }
+
+      //feito pelo chat, não muito confiavel ainda
+      //atualizando os pesos
+      for (int i = 0; i < ocultas.length; i++) {
+         Camada camadaAtual = ocultas[i];
+         Camada proximaCamada;
+         if (i == ocultas.length - 1)
+            proximaCamada = saida;
+         else
+            proximaCamada = ocultas[i + 1];
+      
+         for (int j = 0; j < camadaAtual.neuronios.length; j++) {
+            Neuronio neuronioAtual = camadaAtual.neuronios[j];
+      
+            // Atualizar os pesos do neurônio atual
+            for (int k = 0; k < proximaCamada.neuronios.length; k++) {
+               Neuronio neuronioProximaCamada = proximaCamada.neuronios[k];
+      
+               // Calcular o ajuste do peso usando a regra do Gradiente Descendente
+               double ajustePeso = TAXA_APRENDIZAGEM * neuronioProximaCamada.erro * neuronioAtual.saida;
+               neuronioAtual.pesos[k] -= ajustePeso;
+            }
+         }
+      }
+      
+      // Atualizar os pesos da camada de saída
+      for (int i = 0; i < saida.neuronios.length; i++) {
+         Neuronio neuronioSaida = saida.neuronios[i];
+      
+         // Calcular o ajuste do peso usando a regra do Gradiente Descendente
+         double ajustePeso = TAXA_APRENDIZAGEM * neuronioSaida.erro * neuronioSaida.saida;
+         for (int j = 0; j < neuronioSaida.pesos.length; j++) {
+            neuronioSaida.pesos[j] -= ajustePeso;
+         }
+      }
+   }
+
+
    /**
     * 1 - ReLu.
     * 2 - ReLu derivada.
@@ -178,7 +248,7 @@ public class RedeNeural implements Cloneable{
 
 
    //FUNÇÕES DE ATIVAÇÃO
-   public double funcaoAtivacao(double valor){
+   private double funcaoAtivacao(double valor){
       if(funcaoAtivacao == ativacaoRelu) return relu(valor);
       if(funcaoAtivacao == ativacaoReluDx) return reluDx(valor);
       if(funcaoAtivacao == ativacaoSigmoid) return sigmoid(valor);
@@ -191,7 +261,7 @@ public class RedeNeural implements Cloneable{
    }
 
 
-   public double funcaoAtivacaoSaida(double valor){
+   private double funcaoAtivacaoSaida(double valor){
       if(funcaoAtivacaoSaida == ativacaoRelu) return relu(valor);
       if(funcaoAtivacaoSaida == ativacaoReluDx) return reluDx(valor);
       if(funcaoAtivacaoSaida == ativacaoSigmoid) return sigmoid(valor);
